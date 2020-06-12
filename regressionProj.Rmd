@@ -1,0 +1,96 @@
+---
+title: "Regression Models Project - Cars"
+author: "Bowen Zhang"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Summary
+In this project, we will analyze the mtcars dataset to answer the following questions:
+
+* Is an automatic or manual transmission better for miles per gallon (MPG)?
+* How different is the MPG between automatic and manual transmissions?
+
+With inear regression we find that manual cars have a significant higher average MPG. However as we include more significant variables into our model, we see the difference diminishes almost entirely as as the other variables can account for most of the effect in mpg. 
+
+## Loading our Data
+We will be using the mtcars dataset to perform this analysis. Here is a preview:
+```{r}
+data(mtcars)
+head(mtcars, 3)
+```
+
+## Exploratory Data Analysis
+Let's take a quick look at the average MPG of automatic vs manual transmission. We have also visualized the difference on a boxplot (Appendix A).
+```{r}
+# 1 is manual, 0 is automatic
+round(aggregate(mpg~am, data = mtcars, mean),1)
+```
+
+**T-Test (Appendix B): ** From this we can test for a significant difference in means between MPG for manual and automatic cars. From a quick **t-test** (Appendix B), we find that the **p-value = 0.001374 and the confidence interval at 95% is -11.280194 to -3.209684.**
+
+**Findings: ** From the t-test we see that the confidence interval does not include zero and the p-value of 0.001374 is less than 0.05. This allows us to accept the alternate hypothesis that there is a significant difference in means between manual and automatic MPG. Our next step is to further quantify this through regression analysis.
+
+## Regression Analysis
+
+### Linear Regression
+Regression with two variables: mpg and am
+```{r}
+fit1 <- lm(mpg ~ factor(am), data=mtcars)
+summary(fit1)$coef
+summary(fit1)$r.squared
+```
+We do find that the p-values are low, however the R-squared is only 0.3598. This suggests we should try this with more variables. 
+
+### Analysis of Variance (Appendix C) 
+From Appendix C summary table, we see that the **significant variables with p-values less than 0.05 are cyl**, disp, and wt**. We can now include these variables in a multivariate regression. We also checked these for normality and Homoscedasticity - so we can trust these p-values (Appendix D). 
+
+### Multivariate Regression
+See plot (Appendix E) for reference.
+```{r}
+fit2 <- lm(mpg~ am + wt + cyl + disp, data = mtcars)
+summary(fit2)$coef
+summary(fit2)$r.squared
+```
+**Findings: ** Our R-Squared is now 0.8327, meaning our model can explain for 83% of the variance. From the multivariate model, we accounted for the confounding variables cyl and wt and saw that the difference between manual and automatic transmissions is about **0.13 MPG**. 
+
+## Conclusion
+
+Based on just looking at the two variables transmission and mpg, we do see a significant difference, where manual cars have much higher miles per gallon. However when modeled with confounding variables like weight, cylinders, and displacement - the difference shrinks significantly to almost non-existent. This means that a big part of the difference is actually explained by the other confounding variables.
+
+From our linear regression analysis, manual cars have a higher average by **7.245 mpg** over automatic cars. However, when accounting for other variables such as weight, cylinder, and displacement, the difference drops to **0.129 mpg**. This shows that other variables seem to be contributing more to the effect of mpg.
+
+
+## Appendix
+
+A. Box plot of MPG by transmission type
+```{r boxplot}
+boxplot(mpg ~ am, data = mtcars, col = c("red", "blue"), ylab = "Miles Per Gallon", 
+        xlab = "Transmission Type", main = "MPG by Transmission Type")
+```
+
+B. T-Test
+```{r}
+t.test(mtcars$mpg[mtcars$am==0], mtcars$mpg[mtcars$am==1])
+```
+
+C. Analysis of variance summary
+```{r}
+summary(aov(mpg~., data=mtcars))
+```
+
+D. Residual Plot 
+```{r}
+par(mfrow = c(2,2))
+plot(fit2)
+```
+
+E. Multivariate regression pairs
+```{r}
+pairs(mpg ~ am + wt + cyl + disp, data = mtcars, panel = panel.smooth)
+```
+
+
